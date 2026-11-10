@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Buzón de quejas</title>
+  <meta name="theme-color" content="#4d6bfe" />
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --card: #ffffff;
+      --ink: #12141a;
+      --muted: #5b6270;
+      --line: #e6e8ef;
+      --accent: #4d6bfe;
+      --accent-soft: #eef1ff;
+      --danger: #e5484d;
+      --ok: #2f9e6e;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 50% -200px, #eef1ff 0%, var(--bg) 60%);
+      color: var(--ink);
+      min-height: 100dvh;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+    }
+    header.hero { text-align: center; padding: 12px 0 6px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--accent-soft); color: var(--accent);
+      font-size: 12px; font-weight: 700; letter-spacing: .02em;
+      padding: 6px 12px; border-radius: 999px; margin-bottom: 10px;
+    }
+    .badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+    h1 { font-size: 24px; line-height: 1.2; margin: 6px 0 6px; letter-spacing: -0.02em; }
+    .sub { color: var(--muted); font-size: 14.5px; margin: 0 0 18px; line-height: 1.45; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 24px rgba(18, 20, 26, 0.05);
+      padding: 18px;
+    }
+    label.field { display: block; font-size: 13px; font-weight: 700; margin: 0 0 6px; color: #2a2e38; }
+    .hint { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+    textarea, select {
+      width: 100%;
+      font: inherit;
+      color: var(--ink);
+      background: #fbfbfd;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      outline: none;
+      transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+    textarea { min-height: 128px; resize: vertical; line-height: 1.45; }
+    textarea:focus, select:focus {
+      border-color: var(--accent);
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(77, 107, 254, .12);
+    }
+    select { appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235b6270' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 38px; }
+    .row { margin-bottom: 16px; }
+    .counter { text-align: right; font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .counter.warn { color: var(--danger); font-weight: 700; }
+    button.submit {
+      width: 100%;
+      border: 0;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #fff;
+      font: inherit;
+      font-weight: 700;
+      font-size: 16px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: transform .06s ease, filter .15s ease;
+    }
+    button.submit:active { transform: translateY(1px); }
+    button.submit[disabled] { filter: grayscale(.4) opacity(.6); cursor: not-allowed; }
+    .msg { margin-top: 14px; font-size: 14px; border-radius: 12px; padding: 12px 14px; display: none; line-height: 1.4; }
+    .msg.show { display: block; }
+    .msg.ok { background: #e9f7f0; color: #17603f; border: 1px solid #c6ecd9; }
+    .msg.err { background: #fdecec; color: #8c1d20; border: 1px solid #f6c9ca; }
+    .footer { text-align: center; margin-top: 22px; }
+    a.panel-link {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--accent); text-decoration: none;
+      font-weight: 600; font-size: 14px;
+      padding: 10px 14px; border-radius: 999px;
+      border: 1px solid var(--line); background: #fff;
+    }
+    a.panel-link:active { background: var(--accent-soft); }
+    .legal { margin-top: 14px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f1116; --card: #161922; --ink: #f2f4f8; --muted: #9aa3b2;
+        --line: #242a36; --accent-soft: #1b2140;
+      }
+      body { background: radial-gradient(1200px 600px at 50% -200px, #1a1f33 0%, var(--bg) 60%); }
+      textarea, select { background: #11141c; }
+      textarea:focus, select:focus { background: #0f1219; }
+      a.panel-link { background: var(--card); }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="hero">
+      <div class="badge"><span class="dot"></span> Buzón inteligente</div>
+      <h1>Buzón de quejas</h1>
+      <p class="sub">Contanos qué pasó. Sin nombres, sin vueltas. La prioridad se asigna automáticamente.</p>
+    </header>
+
+    <section class="card">
+      <form id="complaint-form" novalidate>
+        <div class="row">
+          <label class="field" for="categoria">Categoría</label>
+          <select id="categoria" name="categoria" required>
+            <option value="Infraestructura">Infraestructura</option>
+            <option value="Limpieza">Limpieza</option>
+            <option value="Seguridad">Seguridad</option>
+            <option value="Convivencia">Convivencia</option>
+            <option value="Servicios">Servicios</option>
+            <option value="Otro" selected>Otro</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <label class="field" for="texto">Tu queja</label>
+          <textarea id="texto" name="texto" maxlength="500" required
+            placeholder="Ej: La luz del pasillo del 2° piso no funciona desde hace tres días."></textarea>
+          <div class="counter" id="counter">0 / 500</div>
+        </div>
+
+        <button class="submit" type="submit" id="btn">Enviar queja</button>
+        <div class="msg" id="msg" role="status" aria-live="polite"></div>
+      </form>
+    </section>
+
+    <div class="footer">
+      <a class="panel-link" href="./panel.html">Ver panel de quejas →</a>
+      <p class="legal">Las quejas son anónimas. No pedimos nombre ni datos de contacto.</p>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      var form = document.getElementById('complaint-form');
+      var texto = document.getElementById('texto');
+      var categoria = document.getElementById('categoria');
+      var counter = document.getElementById('counter');
+      var msg = document.getElementById('msg');
+      var btn = document.getElementById('btn');
+      var MAX = 500;
+
+      function updateCounter() {
+        var n = texto.value.length;
+        counter.textContent = n + ' / ' + MAX;
+        counter.classList.toggle('warn', n >= MAX - 30);
+      }
+      texto.addEventListener('input', updateCounter);
+      updateCounter();
+
+      function show(type, text) {
+        msg.className = 'msg show ' + type;
+        msg.textContent = text;
+      }
+      function hide() { msg.className = 'msg'; msg.textContent = ''; }
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        hide();
+
+        var t = texto.value.trim();
+        var c = categoria.value;
+        if (t.length < 5) { show('err', 'Escribí un poco más (mínimo 5 caracteres).'); return; }
+        if (t.length > MAX) { show('err', 'Máximo ' + MAX + ' caracteres.'); return; }
+
+        btn.disabled = true;
+        btn.textContent = 'Enviando…';
+
+        try {
+          var res = await fetch('/api/quejas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ texto: t, categoria: c })
+          });
+          var data = await res.json().catch(function () { return {}; });
+          if (!res.ok) {
+            throw new Error(data.error || 'No se pudo enviar la queja.');
+          }
+          form.reset();
+          updateCounter();
+          show('ok', '¡Gracias! Tu queja fue registrada con prioridad ' + (data.prioridad || 'asignada') + '.');
+        } catch (err) {
+          show('err', err.message || 'Error de conexión. Intentá de nuevo.');
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Enviar queja';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Panel de quejas</title>
+  <meta name="theme-color" content="#4d6bfe" />
+  <style>
+    :root {
+      --bg: #f7f8fb; --card: #ffffff; --ink: #12141a; --muted: #5b6270;
+      --line: #e6e8ef; --accent: #4d6bfe; --accent-soft: #eef1ff;
+      --alta: #e5484d; --alta-bg: #fdecec;
+      --media: #c9820b; --media-bg: #fff6e5;
+      --baja: #2f9e6e; --baja-bg: #e9f7f0;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg); color: var(--ink); min-height: 100dvh;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 48px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+    h1 { font-size: 22px; margin: 0; letter-spacing: -0.02em; }
+    .back {
+      text-decoration: none; color: var(--accent); font-weight: 600; font-size: 13px;
+      border: 1px solid var(--line); background: #fff; padding: 8px 12px; border-radius: 999px; white-space: nowrap;
+    }
+    .sub { color: var(--muted); font-size: 14px; margin: 8px 0 16px; }
+    .stats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+    .stat {
+      background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+      padding: 10px 14px; font-size: 13px; color: var(--muted); font-weight: 600;
+    }
+    .stat b { color: var(--ink); font-size: 16px; }
+    .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+    button.refresh {
+      border: 1px solid var(--line); background: #fff; color: var(--ink);
+      font: inherit; font-weight: 600; font-size: 13px; padding: 9px 14px;
+      border-radius: 999px; cursor: pointer;
+    }
+    button.refresh:active { background: var(--accent-soft); }
+    .empty, .error {
+      background: var(--card); border: 1px dashed var(--line); border-radius: var(--radius);
+      padding: 28px 18px; text-align: center; color: var(--muted); font-size: 14.5px;
+    }
+    .error { border-color: #f6c9ca; background: #fdecec; color: #8c1d20; }
+    ul.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+    li.item {
+      background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+      padding: 14px 16px; box-shadow: 0 4px 14px rgba(18, 20, 26, 0.04);
+      border-left: 5px solid var(--line);
+    }
+    li.item.alta { border-left-color: var(--alta); }
+    li.item.media { border-left-color: var(--media); }
+    li.item.baja { border-left-color: var(--baja); }
+    .item-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+    .pill {
+      font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
+      padding: 4px 9px; border-radius: 999px;
+    }
+    .pill.alta { background: var(--alta-bg); color: var(--alta); }
+    .pill.media { background: var(--media-bg); color: var(--media); }
+    .pill.baja { background: var(--baja-bg); color: var(--baja); }
+    .cat {
+      font-size: 12px; font-weight: 600; color: var(--accent);
+      background: var(--accent-soft); padding: 4px 9px; border-radius: 999px;
+    }
+    .date { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .texto { font-size: 15px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; margin: 0; }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f1116; --card: #161922; --ink: #f2f4f8; --muted: #9aa3b2;
+        --line: #242a36; --accent-soft: #1b2140;
+        --alta-bg: #3a1c1e; --media-bg: #3a2e14; --baja-bg: #14302a;
+      }
+      .back, button.refresh { background: var(--card); }
+      .error { background: #3a1c1e; border-color: #5a2a2d; color: #ffb3b5; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <h1>Panel de quejas</h1>
+      <a class="back" href="./index.html">← Enviar queja</a>
+    </header>
+    <p class="sub">Ordenadas por prioridad (alta → media → baja) y luego por fecha, de más reciente a más antigua.</p>
+
+    <div class="stats" id="stats" hidden>
+      <div class="stat">Alta <b id="s-alta">0</b></div>
+      <div class="stat">Media <b id="s-media">0</b></div>
+      <div class="stat">Baja <b id="s-baja">0</b></div>
+      <div class="stat">Total <b id="s-total">0</b></div>
+    </div>
+
+    <div class="toolbar">
+      <button class="refresh" id="refresh" type="button">Actualizar</button>
+    </div>
+
+    <div id="content"></div>
+  </main>
+
+  <script>
+    (function () {
+      var content = document.getElementById('content');
+      var stats = document.getElementById('stats');
+      var refresh = document.getElementById('refresh');
+
+      // Escape HTML: todo lo que viene de la base se muestra como texto.
+      function esc(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function fmtDate(iso) {
+        if (!iso) return '';
+        var d = new Date(iso);
+        if (isNaN(d.getTime())) return String(iso);
+        try {
+          return d.toLocaleString('es-AR', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+          });
+        } catch (e) {
+          return d.toISOString();
+        }
+      }
+
+      function normPriority(p) {
+        var v = String(p || '').toLowerCase();
+        return (v === 'alta' || v === 'media' || v === 'baja') ? v : 'baja';
+      }
+
+      var ORDER = { alta: 0, media: 1, baja: 2 };
+
+      function render(items) {
+        if (!items.length) {
+          stats.hidden = true;
+          content.innerHTML = '<div class="empty">Todavía no hay quejas registradas.</div>';
+          return;
+        }
+
+        var counts = { alta: 0, media: 0, baja: 0 };
+        items.forEach(function (it) { counts[normPriority(it.prioridad)]++; });
+
+        // Orden de respaldo por si el backend devolviera otra cosa.
+        items.sort(function (a, b) {
+          var pa = ORDER[normPriority(a.prioridad)], pb = ORDER[normPriority(b.prioridad)];
+          if (pa !== pb) return pa - pb;
+          var ta = new Date(a.creada || 0).getTime();
+          var tb = new Date(b.creada || 0).getTime();
+          return tb - ta;
+        });
+
+        document.getElementById('s-alta').textContent = counts.alta;
+        document.getElementById('s-media').textContent = counts.media;
+        document.getElementById('s-baja').textContent = counts.baja;
+        document.getElementById('s-total').textContent = items.length;
+        stats.hidden = false;
+
+        var html = '<ul class="list">';
+        items.forEach(function (it) {
+          var pr = normPriority(it.prioridad);
+          html += '<li class="item ' + pr + '">' +
+            '<div class="item-top">' +
+              '<span class="pill ' + pr + '">' + esc(pr) + '</span>' +
+              '<span class="cat">' + esc(it.categoria || 'Otro') + '</span>' +
+              '<span class="date">' + esc(fmtDate(it.creada)) + '</span>' +
+            '</div>' +
+            '<p class="texto">' + esc(it.texto) + '</p>' +
+          '</li>';
+        });
+        html += '</ul>';
+        content.innerHTML = html;
+      }
+
+      async function load() {
+        refresh.disabled = true;
+        content.innerHTML = '<div class="empty">Cargando quejas…</div>';
+        try {
+          var res = await fetch('/api/quejas', { headers: { 'Accept': 'application/json' } });
+          var data = await res.json().catch(function () { return null; });
+          if (!res.ok) {
+            var m = (data && data.error) ? data.error : ('Error HTTP ' + res.status);
+            throw new Error(m);
+          }
+          var items = Array.isArray(data) ? data : (data && Array.isArray(data.quejas) ? data.quejas : []);
+          render(items);
+        } catch (err) {
+          stats.hidden = true;
+          content.innerHTML = '<div class="error">' + esc(err.message || 'No se pudieron cargar las quejas.') + '</div>';
+        } finally {
+          refresh.disabled = false;
+        }
+      }
+
+      refresh.addEventListener('click', load);
+      load();
+    })();
+  </script>
+</body>
+</html>
